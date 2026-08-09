@@ -45,10 +45,42 @@ async function signIn(email, password) {
 }
 async function signOut() { await db.auth.signOut(); }
 
+/* ---------- product photos (Supabase Storage) ---------- */
+const PHOTO_BUCKET = "product-photos";
+
+// Upload photos for a product and record each in product_images.
+// files: FileList/array from an <input type=file>. Returns public URLs.
+// Requires the bucket from storage-setup.sql; admin-only per its policies.
+async function uploadProductPhotos(productId, files) {
+  const urls = [];
+  let i = 0;
+  for (const file of files) {
+    const ext = (file.name.includes(".") ? file.name.split(".").pop() : "jpg").toLowerCase();
+    const path = `${productId}/${Date.now()}-${i}.${ext}`;
+    const { error } = await db.storage.from(PHOTO_BUCKET)
+      .upload(path, file, { contentType: file.type || "image/jpeg" });
+    if (error) throw error;
+    const { data } = db.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+    const { error: imgErr } = await db.from("product_images")
+      .insert({ product_id: productId, url: data.publicUrl, sort_order: i });
+    if (imgErr) throw imgErr;
+    urls.push(data.publicUrl);
+    i++;
+  }
+  return urls;
+}
+
+// First (lowest sort_order) image URL of a row loaded with product_images(...), or null
+function firstImage(p) {
+  const imgs = p && p.product_images;
+  if (!imgs || !imgs.length) return null;
+  return imgs.slice().sort((a, b) => a.sort_order - b.sort_order)[0].url;
+}
+
 /* ---------- catalog ---------- */
-// products joined to their country (name + flag)
+// products joined to their country (name + flag) and photos
 async function loadProducts(filter = {}) {
-  let q = db.from("products").select("*, countries(name, flag_emoji, status)");
+  let q = db.from("products").select("*, countries(name, flag_emoji, status), product_images(url, sort_order)");
   if (filter.tab)      q = q.eq("tab", filter.tab);
   if (filter.category) q = q.eq("category", filter.category);
   if (filter.rare)     q = q.eq("is_rare", true);
@@ -58,12 +90,15 @@ async function loadProducts(filter = {}) {
   if (error) { console.error(error); return []; }
   return data || [];
 }
-async function loadCountries() {
-  const { data } = await db
+// { all: true } returns every country regardless of is_enabled (admin panel)
+async function loadCountries(opts = {}) {
+  let q = db
     .from("countries")
     .select("id, name, flag_emoji, status, continent_id, continents(name)")
-    .eq("is_enabled", true)
     .order("name");
+  if (!opts.all) q = q.eq("is_enabled", true);
+  const { data, error } = await q;
+  if (error) { console.error(error); return []; }
   return data || [];
 }
 
@@ -90,7 +125,7 @@ async function addToCart(productId, qty = 1) {
 async function loadCart() {
   const u = await currentUser(); if (!u) return [];
   const { data } = await db.from("cart_items")
-    .select("id, qty, product_id, products(name, price_cents, quantity, countries(flag_emoji))")
+    .select("id, qty, product_id, products(name, price_cents, quantity, countries(flag_emoji), product_images(url, sort_order))")
     .eq("user_id", u.id);
   return data || [];
 }
@@ -109,7 +144,7 @@ async function toggleWishlist(productId) {
 async function loadWishlist() {
   const u = await currentUser(); if (!u) return [];
   const { data } = await db.from("wishlist_items")
-    .select("id, product_id, products(name, price_cents, quantity, countries(flag_emoji))")
+    .select("id, product_id, products(name, price_cents, quantity, countries(flag_emoji), product_images(url, sort_order))")
     .eq("user_id", u.id);
   return data || [];
 }
@@ -128,14 +163,27 @@ function discountCents(coupon, subtotalCents) {
     : coupon.value;
   return Math.min(d, subtotalCents);           // never exceed subtotal
 }
+const DEFAULT_SHIPPING_CENTS = 8000;   // $80 flat — override via store_settings.shipping_charge_cents
+async function getShippingCents() {
+  const v = parseInt(await getSetting("shipping_charge_cents"), 10);
+  return Number.isFinite(v) && v >= 0 ? v : DEFAULT_SHIPPING_CENTS;
+}
 async function placeOrder(cart, coupon) {
   const u = await currentUser(); if (!u) throw new Error("login");
   const subtotal = cart.reduce((s, i) => s + i.products.price_cents * i.qty, 0);
   const disc = discountCents(coupon, subtotal);
-  const { data: order, error } = await db.from("orders").insert({
+  const ship = await getShippingCents();
+  const ins = {
     user_id: u.id, subtotal_cents: subtotal, discount_cents: disc,
-    total_cents: subtotal - disc, coupon_code: coupon ? coupon.code : null
-  }).select("id, order_no").single();
+    shipping_cents: ship, total_cents: subtotal - disc + ship,
+    coupon_code: coupon ? coupon.code : null
+  };
+  let { data: order, error } = await db.from("orders").insert(ins).select("id, order_no").single();
+  if (error && /shipping_cents/.test(error.message)) {
+    // add-shipping-charge.sql not run yet — place the order without shipping
+    delete ins.shipping_cents; ins.total_cents = subtotal - disc;
+    ({ data: order, error } = await db.from("orders").insert(ins).select("id, order_no").single());
+  }
   if (error) throw error;
   // order items + decrement stock + clear cart
   for (const i of cart) {

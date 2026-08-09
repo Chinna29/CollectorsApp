@@ -13,8 +13,10 @@ Backend is **Supabase** (Postgres + Auth + Storage + Realtime).
 - `account.html` — My Account: profile, order history, wishlist, product requests.
 - `admin.html` — Admin panel: dashboard (trends), add product, inventory/restock, coupons, stock alerts, requests, confirmation-message editor. Gated to `profiles.is_admin = true`.
 - `config.js` — Supabase client + all shared helper functions (auth, catalog, cart, wishlist, coupons, orders, events, settings). All three pages load this.
-- `supabase-setup.sql` — full schema (already run on the project): 15 tables, RLS policies, order-number sequence, seed data.
-- `fix-signup.sql` — hardened signup trigger (already run) that fixed a "Database error saving new user" issue.
+- `SETUP.md` — buyer-facing setup guide: create Supabase project, run `sqls/setup.sql`, paste URL+key into `config.js`, enable GitHub Pages, make-admin SQL, troubleshooting.
+- `sqls/setup.sql` — **one-file complete setup** for a fresh Supabase project (idempotent): all 15 tables (with tags/original_price/shipping columns baked in), hardened signup trigger, all RLS policies, `product-photos` storage bucket + policies, full 243-country seed, sample coupons, store settings. Equivalent to running the numbered files below in order.
+- `sqls/1_supabase-setup.sql` … `sqls/7_add-original-price.sql` — the same setup as individual ordered steps (kept for manual/incremental setup on the existing project): 1 base schema+RLS+seeds, 2 hardened signup trigger, 3 storage bucket, 4 full country list, 5 product tags, 6 shipping charge, 7 original price + product note. On PV's own project, 1–2 are already run; 3–7 pending unless noted otherwise.
+- `.github/workflows/keepalive.yml` — pings Supabase Mon+Thu so the free tier never pauses (must exist on `main` to run on schedule).
 - `database-schema.md` — human-readable schema documentation.
 
 ## Supabase project
@@ -30,7 +32,7 @@ Backend is **Supabase** (Postgres + Auth + Storage + Realtime).
 Signup/login, admin add-product, storefront loads products from DB, cart/wishlist/orders persist, coupons apply with server-side-style math, dashboard reads real events. Tested manually in the browser.
 
 ## Known TODO (pick up here)
-1. **Product photo upload** — create a Supabase Storage bucket `product-photos`; wire the Add-Product "upload" box to upload and save URLs into `product_images`; show the first image on cards instead of the gradient placeholder.
+1. **Product photo upload** — DONE in code (`uploadProductPhotos`/`firstImage` in `config.js`, upload box in admin Add-Product, images on storefront cards + drawer thumbs). Remaining manual step: run `sqls/3_storage-setup.sql` in the Supabase SQL editor to create the bucket, then test an admin upload in the browser.
 2. **Username & phone login** — currently email-only. Username login needs a `security definer` RPC to resolve username→email (RLS blocks reading other profiles). Phone login can use Supabase phone OTP.
 3. **Out-of-stock notifications (#12)** — add a Supabase Edge Function (or trigger) that, when `products.quantity` hits 0, emails the admin and everyone with that product in cart/wishlist/`stock_notifications`.
 4. **Recently-updated view** — add an `updated_at` column and a storefront view (#4).

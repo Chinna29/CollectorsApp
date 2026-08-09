@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — WorldNotes</title>
+<style>
+  :root{--bg:#0e1620;--panel:#15202d;--panel2:#1b2836;--line:#26384c;--ink:#eaf1f8;--muted:#9fb2c6;--accent:#e0b15e;--accent2:#4a8fd6;--good:#5bbf8a;--bad:#e06b6b;--warn:#e0b15e;--chip:#223347;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+  a{color:inherit;text-decoration:none}
+  .sidebar{width:216px;background:linear-gradient(180deg,#12202f,#0e1620);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:0;height:100vh;flex:none}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px;padding:6px 8px 16px}
+  .brand .coin{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f2d492,#c9922f);display:grid;place-items:center;color:#5a3e0e;font-weight:900;font-size:12px}
+  .brand b{color:var(--accent)}.brand small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:var(--muted);font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:2px}
+  .nav a.active{background:var(--panel2);color:var(--ink)}.nav a:hover{color:var(--ink)}
+  .backshop{margin-top:14px;font-size:12px;color:var(--accent2);padding:8px 12px}
+  main{flex:1;padding:22px 26px 60px;max-width:100%}
+  h1{margin:0 0 2px;font-size:22px}.sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+  .section{display:none}.section.active{display:block}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:20px;margin-bottom:18px}
+  .panel h3{margin:0 0 14px;font-size:15px}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .tile .k{font-size:12px;color:var(--muted)}.tile .v{font-size:26px;font-weight:800;margin-top:4px}
+  .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  .bar{margin-bottom:10px}.bar .lab{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}.bar .lab span:last-child{color:var(--muted)}
+  .track{height:8px;background:var(--panel2);border-radius:5px;overflow:hidden}.fill{height:100%;border-radius:5px}
+  .fill.s{background:var(--accent2)}.fill.b{background:var(--good)}.fill.w{background:#c46bd0}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}.field.full{grid-column:1/-1}
+  .field label{font-size:12px;color:var(--muted)}
+  .field input,.field select,.field textarea{background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:11px;outline:none;font-family:inherit;font-size:14px}
+  .radio{display:flex;gap:10px}.radio label{flex:1;border:1px solid var(--line);border-radius:9px;padding:12px;text-align:center;cursor:pointer;background:var(--panel2);font-size:13px}
+  .radio input{display:none}.radio label:has(input:checked){border-color:var(--accent);background:#241d10}.radio input:checked+span{color:var(--accent);font-weight:800}
+  .btn{background:var(--accent);color:#3a2905;border:0;border-radius:9px;padding:12px 22px;font-weight:800;cursor:pointer}
+  .btn.sec{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}.btn.sm{padding:7px 13px;font-size:12px;border-radius:7px}
+  .note{background:#241d10;border:1px solid #5a4a20;border-radius:9px;padding:10px 12px;font-size:12.5px;color:#e6cf9a;margin:10px 0}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid var(--line)}tr:hover td{background:var(--panel2)}
+  .stk{font-weight:700}.stk.out{color:var(--bad)}.stk.low{color:var(--warn)}.stk.ok{color:var(--good)}
+  .tagp{font-size:10px;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--muted)}
+  .switch{position:relative;width:38px;height:22px;background:var(--panel2);border-radius:20px;cursor:pointer;border:1px solid var(--line)}.switch.on{background:#2f5a45}
+  .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#cbd8e6;transition:.15s}.switch.on .knob{left:18px;background:var(--good)}
+  .alertrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:var(--bad);flex:none}
+  .gate{max-width:460px;margin:80px auto;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:34px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#20313f;border:1px solid var(--line);padding:11px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:90}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media(max-width:900px){.tiles,.cols,.fgrid{grid-template-columns:1fr 1fr}.sidebar{width:64px}.brand b,.brand small,.nav a span.t,.backshop{display:none}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="brand"><span class="coin">₩</span><div>World<b>Notes</b><small>ADMIN</small></div></div>
+  <nav class="nav">
+    <a class="active" data-s="dash" onclick="go('dash')">📊 <span class="t">Dashboard</span></a>
+    <a data-s="add" onclick="go('add')">➕ <span class="t">Add product</span></a>
+    <a data-s="inv" onclick="go('inv')">📦 <span class="t">Inventory</span></a>
+    <a data-s="coupon" onclick="go('coupon')">🏷️ <span class="t">Coupons</span></a>
+    <a data-s="alerts" onclick="go('alerts')">🔔 <span class="t">Alerts</span></a>
+    <a data-s="requests" onclick="go('requests')">📩 <span class="t">Requests</span></a>
+    <a data-s="confirm" onclick="go('confirm')">✉️ <span class="t">Confirmation</span></a>
+  </nav>
+  <a class="backshop" href="index.html">← View storefront</a>
+</aside>
+
+<main id="main" style="display:none">
+  <section class="section active" id="dash">
+    <h1>Dashboard</h1><div class="sub">Live trends from real activity (#13).</div>
+    <div class="tiles">
+      <div class="tile"><div class="k">Products live</div><div class="v" id="t_products">—</div></div>
+      <div class="tile"><div class="k">Orders</div><div class="v" id="t_orders">—</div></div>
+      <div class="tile"><div class="k">Revenue</div><div class="v" id="t_rev">—</div></div>
+      <div class="tile"><div class="k">Out of stock</div><div class="v" id="t_out" style="color:var(--bad)">—</div></div>
+    </div>
+    <div class="panel"><div class="cols">
+      <div><h3>🔍 Most searched</h3><div id="trSearch"><div class="sub">No data yet</div></div></div>
+      <div><h3>🛒 Most bought</h3><div id="trBuy"><div class="sub">No data yet</div></div></div>
+      <div><h3>♥ Most wishlisted</h3><div id="trWish"><div class="sub">No data yet</div></div></div>
+    </div></div>
+  </section>
+
+  <section class="section" id="add">
+    <h1>Add a product</h1><div class="sub">Pick continent → country, then coin or banknote (#7).</div>
+    <div class="panel">
+      <div class="fgrid">
+        <div class="field"><label>Continent</label><select id="a_cont" onchange="fillCountrySelect()"></select></div>
+        <div class="field"><label>Country / issuer</label><select id="a_country"></select></div>
+      </div>
+      <div class="note">➡️ Now choose <b>Coin</b> or <b>Banknote</b>:</div>
+      <div class="field full"><label>Type</label><div class="radio">
+        <label><input type="radio" name="ptype" value="coin"><span>🪙 Coin</span></label>
+        <label><input type="radio" name="ptype" value="banknote" checked><span>💵 Banknote</span></label>
+        <label><input type="radio" name="ptype" value="accessory"><span>📦 Accessory</span></label>
+      </div></div>
+      <div class="fgrid" style="margin-top:6px">
+        <div class="field"><label>Product name</label><input id="a_name" placeholder="100 Trillion Dollars, 2008"></div>
+        <div class="field"><label>Category</label><select id="a_cat"><option>UNC</option><option>Rare</option><option>Polymer</option><option>Commemorative</option></select></div>
+        <div class="field"><label>Price ($)</label><input id="a_price" type="number" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label>Quantity</label><input id="a_qty" type="number" placeholder="0"></div>
+        <div class="field full"><label>Short story / description</label><textarea id="a_desc" rows="2" placeholder="The famous hyperinflation note…"></textarea></div>
+        <div class="field"><label><input type="checkbox" id="a_rare"> Mark as Rare</label></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px"><button class="btn" onclick="publishProduct()">Publish product</button></div>
+      <div class="note" style="margin-top:14px">Photo upload will use Supabase Storage — wired in the next pass. For now products publish without images.</div>
+    </div>
+  </section>
+
+  <section class="section" id="inv">
+    <h1>Inventory & restock</h1><div class="sub">Adjust stock, restock (#8), show/hide products (#3).</div>
+    <div class="panel"><table><thead><tr><th>Product</th><th>Type</th><th>Price</th><th>Stock</th><th>Visible</th><th>Action</th></tr></thead><tbody id="invBody"></tbody></table></div>
+  </section>
+
+  <section class="section" id="coupon">
+    <h1>Coupons</h1><div class="sub">Valid coupons update the storefront cart instantly (#10).</div>
+    <div class="panel"><div class="fgrid">
+      <div class="field"><label>Code</label><input id="c_code" placeholder="WELCOME10"></div>
+      <div class="field"><label>Type</label><select id="c_type"><option value="percent">% off</option><option value="flat">$ off</option></select></div>
+      <div class="field"><label>Value (percent, or $ amount)</label><input id="c_val" type="number" placeholder="10"></div>
+      <div class="field"><label>Min. order ($, optional)</label><input id="c_min" type="number" placeholder="0"></div>
+    </div><button class="btn" style="margin-top:12px" onclick="addCouponRow()">Add coupon</button></div>
+    <div class="panel"><h3>Active coupons</h3><table><thead><tr><th>Code</th><th>Discount</th><th>Min order</th><th>Status</th><th></th></tr></thead><tbody id="coupBody"></tbody></table></div>
+  </section>
+
+  <section class="section" id="alerts">
+    <h1>Stock alerts</h1><div class="sub">Products at zero stock (#12).</div>
+    <div class="panel" id="alertBox"></div>
+  </section>
+
+  <section class="section" id="requests">
+    <h1>Customer requests</h1><div class="sub">Notes customers asked you to source (#14).</div>
+    <div class="panel"><table><thead><tr><th>Requested item</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody id="reqBody"></tbody></table></div>
+  </section>
+
+  <section class="section" id="confirm">
+    <h1>Order confirmation message</h1><div class="sub">Custom text shown to customers after checkout (#9).</div>
+    <div class="panel"><div class="field full"><label>Confirmation text</label><textarea id="conf" rows="4"></textarea></div>
+      <button class="btn" style="margin-top:12px" onclick="saveConf()">Save message</button></div>
+  </section>
+</main>
+
+<div id="gate" class="gate" style="display:none">
+  <h1 style="font-size:20px">Admin access only</h1>
+  <p class="sub" id="gateMsg">You need an admin account to view this page.</p>
+  <a class="btn" href="index.html">← Back to storefront</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1900)}
+function go(s){document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===s));document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('active',a.dataset.s===s));
+  if(s==='dash')loadDash();if(s==='inv')loadInv();if(s==='coupon')loadCoups();if(s==='alerts')loadAlerts();if(s==='requests')loadReqs();if(s==='confirm')loadConf();}
+
+let COUNTRIES=[];
+async function boot(){
+  const p=await myProfile();
+  if(!p){document.getElementById('gate').style.display='block';document.getElementById('gateMsg').textContent='Please log in on the storefront first, then return here.';return}
+  if(!p.is_admin){document.getElementById('gate').style.display='block';document.getElementById('gateMsg').textContent='Your account ('+(p.email||'')+') is not an admin yet. Run the make-admin SQL, then reload.';return}
+  document.getElementById('main').style.display='';
+  COUNTRIES=await loadCountries();
+  const conts=[...new Set(COUNTRIES.map(c=>c.continents?.name).filter(Boolean))];
+  document.getElementById('a_cont').innerHTML=conts.map(c=>`<option>${c}</option>`).join('');
+  fillCountrySelect();loadDash();
+}
+function fillCountrySelect(){const c=document.getElementById('a_cont').value;
+  document.getElementById('a_country').innerHTML=COUNTRIES.filter(x=>x.continents?.name===c).map(x=>`<option value="${x.id}">${x.flag_emoji||''} ${x.name}</option>`).join('')}
+
+async function publishProduct(){
+  const name=document.getElementById('a_name').value.trim();if(!name){toast('Enter a product name');return}
+  const type=document.querySelector('input[name=ptype]:checked').value;
+  const tab=type==='coin'?'coins':type==='accessory'?'accessories':'currency';
+  const row={country_id:parseInt(document.getElementById('a_country').value)||null,type,tab,
+    category:document.getElementById('a_cat').value,name,description:document.getElementById('a_desc').value.trim(),
+    price_cents:toCents(document.getElementById('a_price').value),quantity:parseInt(document.getElementById('a_qty').value)||0,
+    is_rare:document.getElementById('a_rare').checked};
+  const {error}=await db.from('products').insert(row);
+  if(error){toast('Error: '+error.message);return}
+  toast('Product published ✓');document.getElementById('a_name').value='';document.getElementById('a_price').value='';document.getElementById('a_qty').value='';document.getElementById('a_desc').value='';
+}
+
+async function loadDash(){
+  const {count:pc}=await db.from('products').select('id',{count:'exact',head:true});
+  const {data:orders}=await db.from('orders').select('total_cents');
+  const {count:oc}=await db.from('products').select('id',{count:'exact',head:true}).eq('quantity',0);
+  document.getElementById('t_products').textContent=pc??0;
+  document.getElementById('t_orders').textContent=orders?orders.length:0;
+  document.getElementById('t_rev').textContent=money((orders||[]).reduce((s,o)=>s+o.total_cents,0));
+  document.getElementById('t_out').textContent=oc??0;
+  await trend('search','trSearch','s');await trend('purchase','trBuy','b');await trend('wishlist','trWish','w');
+  // wishlist events aren't logged separately; approximate from wishlist_items
+  const {data:wl}=await db.from('wishlist_items').select('product_id, products(name)');
+  renderTrend('trWish','w',tally((wl||[]).map(x=>x.products?.name).filter(Boolean)));
+}
+function tally(names){const m={};names.forEach(n=>m[n]=(m[n]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,5)}
+async function trend(type,el,cls){
+  const {data}=await db.from('events').select('search_term, products(name)').eq('type',type);
+  const labels=(data||[]).map(e=>e.products?.name||e.search_term).filter(Boolean);
+  renderTrend(el,cls,tally(labels));
+}
+function renderTrend(el,cls,rows){const box=document.getElementById(el);
+  if(!rows.length){box.innerHTML='<div class="sub">No data yet</div>';return}
+  const max=rows[0][1];box.innerHTML=rows.map(r=>`<div class="bar"><div class="lab"><span>${r[0]}</span><span>${r[1]}</span></div><div class="track"><div class="fill ${cls}" style="width:${r[1]/max*100}%"></div></div></div>`).join('')}
+
+async function loadInv(){const {data}=await db.from('products').select('*').order('created_at',{ascending:false});
+  document.getElementById('invBody').innerHTML=(data||[]).map(r=>{const cls=r.quantity===0?'out':r.quantity<=2?'low':'ok';
+    return `<tr><td>${r.name}</td><td><span class="tagp">${r.type}</span></td><td>${money(r.price_cents)}</td>
+    <td class="stk ${cls}">${r.quantity===0?'Out':r.quantity}</td>
+    <td><div class="switch ${r.is_visible?'on':''}" onclick="toggleVis('${r.id}',${!r.is_visible})"><div class="knob"></div></div></td>
+    <td><button class="btn sm" onclick="restock('${r.id}',${r.quantity})">+ Restock</button></td></tr>`}).join('')||'<tr><td colspan=6 class="sub">No products yet.</td></tr>'}
+async function restock(id,cur){const q=prompt('Add how many units?','10');if(!q||isNaN(q))return;
+  const add=parseInt(q);await db.from('products').update({quantity:cur+add}).eq('id',id);
+  await db.from('inventory_log').insert({product_id:id,change:add,reason:'restock'});toast('Restocked +'+add+' ✓');loadInv()}
+async function toggleVis(id,v){await db.from('products').update({is_visible:v}).eq('id',id);loadInv()}
+
+async function loadCoups(){const {data}=await db.from('coupons').select('*').order('code');
+  document.getElementById('coupBody').innerHTML=(data||[]).map(c=>`<tr><td><b>${c.code}</b></td>
+    <td>${c.type==='percent'?c.value+'% off':money(c.value)+' off'}</td><td>${c.min_order_cents?money(c.min_order_cents):'—'}</td>
+    <td><div class="switch ${c.is_active?'on':''}" onclick="toggleCoup('${c.id}',${!c.is_active})"><div class="knob"></div></div></td>
+    <td><button class="btn sm sec" onclick="rmCoup('${c.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=5 class="sub">No coupons.</td></tr>'}
+async function addCouponRow(){const code=document.getElementById('c_code').value.trim().toUpperCase();const type=document.getElementById('c_type').value;
+  const raw=parseFloat(document.getElementById('c_val').value);if(!code||!raw){toast('Enter code and value');return}
+  const value=type==='percent'?Math.round(raw):toCents(raw);const min=toCents(document.getElementById('c_min').value);
+  const {error}=await db.from('coupons').insert({code,type,value,min_order_cents:min});
+  if(error){toast('Error: '+error.message);return}
+  document.getElementById('c_code').value='';document.getElementById('c_val').value='';document.getElementById('c_min').value='';toast('Coupon added ✓');loadCoups()}
+async function toggleCoup(id,v){await db.from('coupons').update({is_active:v}).eq('id',id);loadCoups()}
+async function rmCoup(id){await db.from('coupons').delete().eq('id',id);loadCoups()}
+
+async function loadAlerts(){const {data}=await db.from('products').select('*').eq('quantity',0);
+  const box=document.getElementById('alertBox');
+  box.innerHTML=(data&&data.length)?data.map(p=>`<div class="alertrow"><span class="dot"></span><div style="flex:1"><b>${p.name}</b> is out of stock</div><button class="btn sm" onclick="restock('${p.id}',0)">Restock</button></div>`).join(''):'<div class="sub">Nothing out of stock 🎉</div>'}
+
+async function loadReqs(){const {data}=await db.from('product_requests').select('*').order('created_at',{ascending:false});
+  document.getElementById('reqBody').innerHTML=(data||[]).map(r=>`<tr><td>${r.text}</td><td>${new Date(r.created_at).toLocaleDateString()}</td>
+    <td><span class="tagp">${r.status}</span></td><td>${r.status==='sourcing'?`<button class="btn sm sec" onclick="markFound('${r.id}')">Mark found</button>`:''}</td></tr>`).join('')||'<tr><td colspan=4 class="sub">No requests.</td></tr>'}
+async function markFound(id){await db.from('product_requests').update({status:'found'}).eq('id',id);toast('Marked as found');loadReqs()}
+
+async function loadConf(){document.getElementById('conf').value=await getSetting('confirmation_message')}
+async function saveConf(){await setSetting('confirmation_message',document.getElementById('conf').value);toast('Confirmation message saved')}
+
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account — WorldNotes</title>
+<style>
+  :root{--bg:#0f1720;--panel:#16212e;--panel2:#1c2a3a;--line:#26384c;--ink:#eaf1f8;--muted:#9fb2c6;--accent:#e0b15e;--accent2:#4a8fd6;--good:#5bbf8a;--bad:#e06b6b;--chip:#223347;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 18px}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#12202f,#0f1720);border-bottom:1px solid var(--line)}
+  .topbar{display:flex;align-items:center;gap:16px;padding:12px 0}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+  .logo .coin{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f2d492,#c9922f);display:grid;place-items:center;color:#5a3e0e;font-weight:900}
+  .logo b{color:var(--accent)}
+  .backlink{margin-left:auto;color:var(--accent2);font-size:13px}
+  .logout{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#4a8fd6,#e0b15e);display:grid;place-items:center;font-weight:800;color:#0f1720}
+  .layout{display:grid;grid-template-columns:220px 1fr;gap:24px;padding:24px 0 60px}
+  .menu{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;height:max-content;position:sticky;top:96px}
+  .menu a{display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:9px;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer}
+  .menu a.active{background:var(--panel2);color:var(--ink)}.menu a:hover{color:var(--ink)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:20px}
+  .panel h2{margin:0 0 4px;font-size:19px}.panel .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .section{display:none}.section.active{display:block}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}
+  .field label{font-size:12px;color:var(--muted)}
+  .field input,.field textarea{background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:11px;outline:none;font-family:inherit;font-size:14px}
+  .save{margin-top:16px;background:var(--accent);color:#3a2905;border:0;border-radius:9px;padding:12px 22px;font-weight:800;cursor:pointer}
+  .order{border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:12px}
+  .order .head{display:flex;justify-content:space-between;align-items:center}.order .no{font-weight:800;color:var(--accent)}
+  .status{font-size:11px;font-weight:700;border-radius:20px;padding:3px 11px}
+  .status.delivered{background:#173a2a;color:var(--good)}.status.shipped{background:#173049;color:var(--accent2)}.status.processing{background:#3a3417;color:var(--accent)}
+  .order .lines{margin-top:10px;color:var(--muted);font-size:13px}.order .lines div{display:flex;justify-content:space-between;padding:3px 0}
+  .order .tot{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-weight:700}
+  .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .row .sw{width:44px;height:28px;border-radius:5px;flex:none;background:#c9922f}.row .grow{flex:1}.row .muted{color:var(--muted);font-size:12px}
+  .pill{font-size:11px;border-radius:20px;padding:3px 10px;background:var(--chip);color:var(--muted)}.pill.done{background:#173a2a;color:var(--good)}
+  .reqbox{display:flex;gap:8px;margin-bottom:14px}.reqbox input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:11px;outline:none}
+  .reqbox button{background:var(--accent);color:#3a2905;border:0;border-radius:9px;padding:0 18px;font-weight:800;cursor:pointer}
+  .empty{color:var(--muted);padding:30px 0;text-align:center;font-size:13px}
+  .gate{max-width:440px;margin:80px auto;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:34px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#20313f;border:1px solid var(--line);padding:11px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:90}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media(max-width:760px){.layout{grid-template-columns:1fr}.menu{position:static;display:flex;overflow:auto}.fgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap topbar">
+  <div class="logo"><span class="coin">₩</span> World<b>Notes</b></div>
+  <a class="backlink" href="index.html">← Back to shop</a>
+  <button class="logout" onclick="doLogout()">Log out</button>
+  <div class="avatar" id="avatar">·</div>
+</div></header>
+
+<div class="wrap layout" id="app" style="display:none">
+  <nav class="menu">
+    <a class="active" data-s="profile" onclick="go('profile')">👤 Profile</a>
+    <a data-s="orders" onclick="go('orders')">📦 Orders</a>
+    <a data-s="wishlist" onclick="go('wishlist')">♥ Wishlist</a>
+    <a data-s="requests" onclick="go('requests')">📩 Requests</a>
+  </nav>
+  <div>
+    <section class="section active" id="profile"><div class="panel">
+      <h2>My Profile</h2><div class="sub">Saved to your account (#15).</div>
+      <div class="fgrid">
+        <div class="field"><label>Full name</label><input id="p_name"></div>
+        <div class="field"><label>Username</label><input id="p_user"></div>
+        <div class="field"><label>Email</label><input id="p_email" disabled></div>
+        <div class="field"><label>Phone number</label><input id="p_phone"></div>
+        <div class="field full"><label>Address</label><textarea id="p_addr" rows="3"></textarea></div>
+      </div>
+      <button class="save" onclick="saveProfileForm()">Save changes</button>
+    </div></section>
+
+    <section class="section" id="orders"><div class="panel">
+      <h2>Order history</h2><div class="sub">Order numbers run from WC-001 (#6).</div>
+      <div id="orderList"><div class="empty">Loading…</div></div>
+    </div></section>
+
+    <section class="section" id="wishlist"><div class="panel">
+      <h2>Wishlist</h2><div class="sub">Saved items (#5).</div>
+      <div id="wishList"><div class="empty">Loading…</div></div>
+    </div></section>
+
+    <section class="section" id="requests"><div class="panel">
+      <h2>Request a note</h2><div class="sub">Ask admin to source something (#14).</div>
+      <div class="reqbox"><input id="reqInput" placeholder="e.g. Bhutan 100 Ngultrum, UNC"><button onclick="addReq()">Send</button></div>
+      <div id="reqList"></div>
+    </div></section>
+  </div>
+</div>
+
+<div id="gate" class="gate" style="display:none">
+  <h1 style="font-size:20px">You're not logged in</h1>
+  <p class="sub">Please log in from the storefront to view your account.</p>
+  <a class="save" href="index.html" style="display:inline-block;text-decoration:none">← Go to storefront</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1800)}
+function go(s){document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===s));document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('active',a.dataset.s===s));
+  if(s==='orders')loadOrders();if(s==='wishlist')loadWish();if(s==='requests')loadReqList()}
+
+let PROFILE=null;
+async function boot(){
+  PROFILE=await myProfile();
+  if(!PROFILE){document.getElementById('gate').style.display='block';return}
+  document.getElementById('app').style.display='grid';
+  document.getElementById('avatar').textContent=(PROFILE.full_name||PROFILE.username||PROFILE.email||'·')[0].toUpperCase();
+  document.getElementById('p_name').value=PROFILE.full_name||'';
+  document.getElementById('p_user').value=PROFILE.username||'';
+  document.getElementById('p_email').value=PROFILE.email||'';
+  document.getElementById('p_phone').value=PROFILE.phone||'';
+  document.getElementById('p_addr').value=PROFILE.address||'';
+}
+async function saveProfileForm(){
+  const up={full_name:document.getElementById('p_name').value.trim(),username:document.getElementById('p_user').value.trim(),
+    phone:document.getElementById('p_phone').value.trim(),address:document.getElementById('p_addr').value.trim()};
+  const {error}=await db.from('profiles').update(up).eq('id',PROFILE.id);
+  if(error){toast('Error: '+error.message);return}
+  document.getElementById('avatar').textContent=(up.full_name||up.username||'·')[0].toUpperCase();toast('Profile saved ✓')}
+
+async function loadOrders(){
+  const {data:orders}=await db.from('orders').select('*').order('created_at',{ascending:false});
+  const box=document.getElementById('orderList');
+  if(!orders||!orders.length){box.innerHTML='<div class="empty">No orders yet.</div>';return}
+  let html='';
+  for(const o of orders){
+    const {data:items}=await db.from('order_items').select('qty, unit_price_cents, products(name)').eq('order_id',o.id);
+    const no='WC-'+String(o.order_no).padStart(3,'0');
+    html+=`<div class="order"><div class="head"><span class="no">${no}</span><span class="status ${o.status}">${o.status}</span></div>
+      <div class="sub" style="margin:6px 0 0">Placed ${new Date(o.created_at).toLocaleDateString()}</div>
+      <div class="lines">${(items||[]).map(i=>`<div><span>${i.qty}× ${i.products?.name||'item'}</span><span>${money(i.qty*i.unit_price_cents)}</span></div>`).join('')}</div>
+      <div class="tot"><span>Total</span><span>${money(o.total_cents)}</span></div></div>`;
+  }
+  box.innerHTML=html;
+}
+async function loadWish(){const w=await loadWishlist();const box=document.getElementById('wishList');
+  box.innerHTML=w.length?w.map(x=>`<div class="row"><div class="sw"></div><div class="grow"><div>${x.products.name}</div>
+    <div class="muted">${x.products.countries?.flag_emoji||''} · ${money(x.products.price_cents)}</div></div>
+    ${x.products.quantity===0?'<span class="pill">Out of stock</span>':`<button class="pill" style="cursor:pointer;background:#173049;color:#4a8fd6" onclick="mv('${x.product_id}','${x.id}')">Move to cart</button>`}</div>`).join(''):'<div class="empty">Your wishlist is empty.</div>'}
+async function mv(pid,wid){await addToCart(pid);await db.from('wishlist_items').delete().eq('id',wid);toast('Moved to cart 🛒');loadWish()}
+
+async function loadReqList(){const {data}=await db.from('product_requests').select('*').order('created_at',{ascending:false});
+  document.getElementById('reqList').innerHTML=(data||[]).map(r=>`<div class="row"><div class="grow">${r.text}</div><span class="pill ${r.status==='found'?'done':''}">${r.status}</span></div>`).join('')||'<div class="empty">No requests yet.</div>'}
+async function addReq(){const v=document.getElementById('reqInput').value.trim();if(!v)return;
+  await db.from('product_requests').insert({user_id:PROFILE.id,text:v});document.getElementById('reqInput').value='';toast('Request sent 📩');loadReqList()}
+
+async function doLogout(){await signOut();location.href='index.html'}
+boot();
+</script>
+</body>
+</html>

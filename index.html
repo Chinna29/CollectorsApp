@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorldNotes — World Currency Collection</title>
+<style>
+  :root{--bg:#0f1720;--panel:#16212e;--panel2:#1c2a3a;--line:#26384c;--ink:#eaf1f8;--muted:#9fb2c6;--accent:#e0b15e;--accent2:#4a8fd6;--good:#5bbf8a;--bad:#e06b6b;--chip:#223347;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+  header{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,#12202f,#0f1720);border-bottom:1px solid var(--line)}
+  .topbar{display:flex;align-items:center;gap:18px;padding:12px 0}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+  .logo .coin{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f2d492,#c9922f);display:grid;place-items:center;color:#5a3e0e;font-weight:900;font-size:14px}
+  .logo b{color:var(--accent)}
+  .search{flex:1;display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .search input{flex:1;background:transparent;border:0;color:var(--ink);padding:10px 12px;outline:none}
+  .search button{background:var(--panel2);border:0;color:var(--muted);padding:0 14px;cursor:pointer}
+  .top-actions{display:flex;align-items:center;gap:6px}
+  .iconbtn{position:relative;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:9px 12px;cursor:pointer;font-size:13px}
+  .iconbtn:hover{border-color:var(--accent)}
+  .badge{position:absolute;top:-7px;right:-7px;background:var(--accent);color:#3a2905;font-size:11px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+  nav.tabs{display:flex;gap:4px;border-top:1px solid var(--line)}
+  nav.tabs a{padding:12px 16px;color:var(--muted);font-weight:600;font-size:14px;border-bottom:2px solid transparent;cursor:pointer}
+  nav.tabs a.active{color:var(--ink);border-color:var(--accent)}
+  nav.tabs a:hover{color:var(--ink)}
+  .subrow{display:flex;flex-wrap:wrap;gap:8px;padding:14px 0}
+  .chip{background:var(--chip);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer}
+  .chip.active{background:var(--accent);color:#3a2905;border-color:var(--accent);font-weight:700}
+  .grid{display:grid;grid-template-columns:230px 1fr;gap:22px;padding:6px 0 40px}
+  .side{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;height:max-content;position:sticky;top:120px}
+  .side h4{margin:0 0 8px;font-size:12px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+  .side li{list-style:none;font-size:13px;color:var(--muted);padding:6px 0;cursor:pointer}
+  .side li:hover{color:var(--accent)}
+  .banner{background:linear-gradient(120deg,#1b3350,#16212e);border:1px solid var(--line);border-radius:14px;padding:22px;margin:6px 0 18px}
+  .banner h2{margin:0 0 6px;font-size:22px}.banner p{margin:0;color:var(--muted);font-size:14px}
+  .sec-title{display:flex;align-items:center;justify-content:space-between;margin:16px 0 12px}
+  .sec-title h3{margin:0;font-size:17px}.sec-title span{font-size:13px;color:var(--muted)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:.15s}
+  .card:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .note{height:130px;position:relative;display:grid;place-items:center;color:#0e1a12;font-weight:800;font-size:13px;text-align:center;padding:10px}
+  .note small{display:block;font-weight:600;opacity:.7;font-size:11px}
+  .heartbtn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.35);border:0;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px}
+  .heartbtn.on{color:#ff6b81}
+  .ribbon{position:absolute;top:8px;left:0;font-size:10px;font-weight:800;padding:3px 8px;border-radius:0 6px 6px 0;background:var(--accent);color:#3a2905}
+  .ribbon.rare{background:#c46bd0;color:#2a0e2f}.ribbon.out{background:#4b5a6b;color:#cbd8e6}
+  .cbody{padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .cname{font-size:13.5px;font-weight:700;line-height:1.3}
+  .g{font-size:10px;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--muted)}
+  .story{font-size:11px;color:#c9b98f;font-style:italic;line-height:1.4}
+  .crow{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:6px}
+  .price{font-weight:800;font-size:15px;color:var(--accent)}
+  .stock{font-size:10.5px}.stock.low{color:var(--accent)}.stock.out{color:var(--bad)}.stock.ok{color:var(--muted)}
+  .addbtn{background:var(--accent2);border:0;color:#fff;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}
+  .notify{background:transparent;border:1px solid var(--accent2);color:var(--accent2);border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer}
+  .overlay{position:fixed;inset:0;background:rgba(4,8,12,.6);z-index:60;display:none}.overlay.show{display:block}
+  .drawer{position:fixed;top:0;right:-460px;width:420px;max-width:92vw;height:100%;background:var(--panel);border-left:1px solid var(--line);z-index:70;transition:right .25s;display:flex;flex-direction:column}
+  .drawer.show{right:0}
+  .drawer .dh{padding:16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+  .drawer h3{margin:0;font-size:16px}.x{background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer}
+  .ditems{flex:1;overflow:auto;padding:8px 16px}
+  .ditem{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .ditem .thumb{width:52px;height:34px;border-radius:5px;background:#c9922f;flex:none}
+  .ditem .info{flex:1;font-size:12.5px}.ditem .info b{display:block;font-size:13px;margin-bottom:2px}
+  .qty{display:inline-flex;align-items:center;gap:8px;margin-top:4px}
+  .qty button{width:22px;height:22px;border-radius:5px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer}
+  .rm{background:none;border:0;color:var(--bad);font-size:11px;cursor:pointer}
+  .move{background:none;border:0;color:var(--accent2);font-size:11px;cursor:pointer}
+  .dfoot{padding:14px 16px;border-top:1px solid var(--line)}
+  .coupon{display:flex;gap:8px;margin-bottom:10px}
+  .coupon input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:9px 10px;outline:none}
+  .coupon button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:0 14px;cursor:pointer}
+  .sumline{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:4px 0}
+  .sumline.total{color:var(--ink);font-weight:800;font-size:16px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+  .disc{color:var(--good)}
+  .checkout{width:100%;background:var(--accent);color:#3a2905;border:0;border-radius:10px;padding:13px;font-weight:800;cursor:pointer;margin-top:10px}
+  .empty{color:var(--muted);text-align:center;padding:40px 10px;font-size:13px}
+  .hint{font-size:11px;color:var(--muted);margin-top:6px}
+  .cn{font-size:11px;margin-top:6px}.cn.ok{color:var(--good)}.cn.err{color:var(--bad)}
+  .modal{position:fixed;inset:0;z-index:80;display:none;place-items:center;background:rgba(4,8,12,.7);padding:16px}.modal.show{display:grid}
+  .mbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:380px;max-width:100%;padding:22px}
+  .mbox h3{margin:0 0 4px}.mbox p{margin:0 0 16px;color:var(--muted);font-size:13px}
+  .seg{display:flex;background:var(--panel2);border-radius:8px;padding:3px;margin-bottom:14px}
+  .seg button{flex:1;background:none;border:0;color:var(--muted);padding:8px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:600}
+  .seg button.active{background:var(--accent);color:#3a2905}
+  .field{margin-bottom:12px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:11px;outline:none}
+  .primary{width:100%;background:var(--accent);color:#3a2905;border:0;border-radius:9px;padding:12px;font-weight:800;cursor:pointer}
+  .swap{text-align:center;font-size:12px;color:var(--muted);margin-top:12px}.swap a{color:var(--accent2);cursor:pointer}
+  .err{color:var(--bad);font-size:12px;margin-top:8px;min-height:14px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#20313f;border:1px solid var(--line);padding:11px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:90}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:12px;padding:22px 0;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="logo"><span class="coin">₩</span> World<b>Notes</b></div>
+      <div class="search"><input id="search" placeholder="Search country or note…"><button onclick="doSearch()">🔍</button></div>
+      <div class="top-actions">
+        <a class="iconbtn" id="acctBtn" href="account.html" style="display:none">👤 <span id="who"></span></a>
+        <button class="iconbtn" id="loginBtn" onclick="openModal()">👤 Login</button>
+        <a class="iconbtn" id="adminBtn" href="admin.html" style="display:none">🛠 Admin</a>
+        <button class="iconbtn" onclick="openDrawer('wish')">♡<span class="badge" id="wishCount">0</span></button>
+        <button class="iconbtn" onclick="openDrawer('cart')">🛒<span class="badge" id="cartCount">0</span></button>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <a class="active" data-tab="currency" onclick="setTab('currency')">Currency</a>
+      <a data-tab="coins" onclick="setTab('coins')">Coins</a>
+      <a data-tab="accessories" onclick="setTab('accessories')">Accessories</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="subrow" id="subrow"></div>
+  <div class="grid">
+    <aside class="side">
+      <h4>Quick views</h4>
+      <li onclick="quickView('recent')">🆕 Recently added</li>
+      <li onclick="quickView('out')">⛔ Out of stock</li>
+      <li onclick="quickView('rare')">💎 Rare finds</li>
+      <li onclick="requestProduct()">📩 Request a note</li>
+      <h4 style="margin-top:16px">All items</h4>
+      <li onclick="setTab('currency')">Show everything</li>
+    </aside>
+    <main>
+      <div class="banner"><h2>Currency from every corner of the world 🌍</h2><p>Including defunct nations. Each note carries its story.</p></div>
+      <div class="sec-title"><h3 id="gridTitle">All Currency</h3><span id="count"></span></div>
+      <div class="cards" id="cards"><div class="empty">Loading…</div></div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+<div class="drawer" id="drawer">
+  <div class="dh"><h3 id="drawerTitle">Cart</h3><button class="x" onclick="closeAll()">✕</button></div>
+  <div class="ditems" id="drawerItems"></div>
+  <div class="dfoot" id="drawerFoot"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <h3 id="mTitle">Welcome back</h3>
+    <p id="mSub">Log in to your collection</p>
+    <div id="regFields" style="display:none">
+      <div class="field"><label>Full name</label><input id="fName" placeholder="Your name"></div>
+      <div class="field"><label>Username</label><input id="fUser" placeholder="collector01"></div>
+    </div>
+    <div class="field"><label>Email</label><input id="fEmail" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input id="fPass" type="password" placeholder="••••••••"></div>
+    <button class="primary" onclick="doAuth()"><span id="mBtn">Log in</span></button>
+    <div class="err" id="authErr"></div>
+    <div class="swap" id="mSwap">New collector? <a onclick="toggleReg()">Create account</a></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<footer class="wrap">WorldNotes — connected to Supabase. Sign up, then have the admin add products to see them here.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+let S={tab:"currency",sub:"All",quick:null,search:"",products:[],wish:new Set(),cartCount:0,coupon:null,reg:false,drawer:null};
+const SUBS={currency:["All","UNC","Rare","Polymer"],coins:["All","UNC","Rare"],accessories:["All"]};
+const COL={UNC:"#f0c14b",Rare:"#c7a3d6",Polymer:"#8fd6a6",Commemorative:"#8fb8d6"};
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1900)}
+
+async function refreshAuthUI(){
+  const p=await myProfile();
+  if(p){
+    document.getElementById('loginBtn').style.display='none';
+    const a=document.getElementById('acctBtn');a.style.display='';document.getElementById('who').textContent=p.username||p.full_name||'Account';
+    if(p.is_admin)document.getElementById('adminBtn').style.display='';
+    const [w,c]=await Promise.all([loadWishlist(),loadCart()]);
+    S.wish=new Set(w.map(x=>x.product_id));document.getElementById('wishCount').textContent=w.length;
+    document.getElementById('cartCount').textContent=c.reduce((a,b)=>a+b.qty,0);
+  }
+}
+
+function renderSubs(){document.getElementById('subrow').innerHTML=(SUBS[S.tab]||["All"]).map(s=>`<div class="chip ${S.sub===s?'active':''}" onclick="setSub('${s}')">${s}</div>`).join('')}
+
+async function loadGrid(){
+  const f={};
+  if(S.quick==='recent')f.recent=true; else if(S.quick==='out')f.outOfStock=true; else if(S.quick==='rare')f.rare=true;
+  else {f.tab=S.tab; if(S.sub!=='All')f.category=S.sub;}
+  S.products=await loadProducts(f);
+  if(S.search){const q=S.search.toLowerCase();S.products=S.products.filter(p=>(p.name+(p.countries?.name||'')).toLowerCase().includes(q))}
+  renderCards();
+}
+function renderCards(){
+  const list=S.products;document.getElementById('count').textContent=list.length+" items";
+  const c=document.getElementById('cards');
+  if(!list.length){c.innerHTML='<div class="empty">No items yet. Add products from the Admin panel to see them here.</div>';return}
+  c.innerHTML=list.map(p=>{
+    const out=p.quantity===0,low=p.quantity>0&&p.quantity<=2,flag=p.countries?.flag_emoji||'🌐',cn=p.countries?.name||'';
+    const rib=out?'<div class="ribbon out">Out of stock</div>':p.is_rare?'<div class="ribbon rare">Rare</div>':'';
+    return `<div class="card"><div class="note" style="background:linear-gradient(135deg,${COL[p.category]||'#e0b15e'},#b98a2e)">
+      ${rib}<button class="heartbtn ${S.wish.has(p.id)?'on':''}" onclick="wish('${p.id}')">${S.wish.has(p.id)?'♥':'♡'}</button>
+      <div>${flag} ${cn}<small>${p.type}</small></div></div>
+      <div class="cbody"><div class="cname">${p.name}</div>
+        <div>${p.category?`<span class="g">${p.category}</span>`:''}</div>
+        ${p.description?`<div class="story">“${p.description}”</div>`:''}
+        <div class="crow"><div><div class="price">${money(p.price_cents)}</div>
+          <div class="stock ${out?'out':low?'low':'ok'}">${out?'Out of stock':low?('Only '+p.quantity+' left'):(p.quantity+' in stock')}</div></div>
+          ${out?`<button class="notify" onclick="toast('We’ll notify you when it’s back 🔔')">Notify me</button>`:`<button class="addbtn" onclick="addCart('${p.id}')">Add to cart</button>`}
+        </div></div></div>`;
+  }).join('');
+}
+
+function setTab(t){S.tab=t;S.sub='All';S.quick=null;S.search='';document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('active',a.dataset.tab===t));
+  document.getElementById('gridTitle').textContent='All '+t[0].toUpperCase()+t.slice(1);renderSubs();loadGrid()}
+function setSub(s){S.sub=s;S.quick=null;document.getElementById('gridTitle').textContent=(s==='All'?'All ':s+' ')+S.tab;renderSubs();loadGrid()}
+function quickView(q){S.quick=q;const t={recent:'🆕 Recently added',out:'⛔ Out of stock',rare:'💎 Rare finds'};document.getElementById('gridTitle').textContent=t[q];loadGrid()}
+function doSearch(){S.search=document.getElementById('search').value.trim();S.quick=null;if(S.search)logEvent('search',{term:S.search});
+  document.getElementById('gridTitle').textContent=S.search?('Results for “'+S.search+'”'):'All Currency';loadGrid()}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement.id==='search')doSearch()});
+
+async function wish(id){if(!await currentUser()){openModal();return}
+  const on=await toggleWishlist(id);if(on)S.wish.add(id);else S.wish.delete(id);
+  toast(on?'Added to wishlist ♥':'Removed');renderCards();refreshAuthUI();if(S.drawer)renderDrawer()}
+async function addCart(id){if(!await currentUser()){toast('Please log in first');openModal();return}
+  await addToCart(id);await logEvent('view',{productId:id});toast('Added to cart 🛒');refreshAuthUI();if(S.drawer)renderDrawer()}
+async function requestProduct(){if(!await currentUser()){openModal();return}
+  const n=prompt('Which note or coin would you like us to source?');if(!n)return;
+  const u=await currentUser();await db.from('product_requests').insert({user_id:u.id,text:n});toast('Request sent to admin 📩')}
+
+async function openDrawer(kind){if(!await currentUser()){openModal();return}
+  S.drawer=kind;await renderDrawer();document.getElementById('overlay').classList.add('show');document.getElementById('drawer').classList.add('show')}
+function closeAll(){S.drawer=null;document.getElementById('overlay').classList.remove('show');document.getElementById('drawer').classList.remove('show');document.getElementById('modal').classList.remove('show')}
+
+async function renderDrawer(){
+  const title=document.getElementById('drawerTitle'),items=document.getElementById('drawerItems'),foot=document.getElementById('drawerFoot');
+  if(S.drawer==='wish'){
+    const w=await loadWishlist();title.textContent='Wishlist ('+w.length+')';
+    items.innerHTML=w.length?w.map(x=>`<div class="ditem"><div class="thumb"></div><div class="info"><b>${x.products.name}</b>${x.products.countries?.flag_emoji||''} · ${money(x.products.price_cents)}
+      <div>${x.products.quantity===0?'<span style="color:#e06b6b">Out of stock</span>':`<button class="move" onclick="moveToCart('${x.product_id}','${x.id}')">→ Move to cart</button>`}</div></div>
+      <button class="rm" onclick="rmWish('${x.id}')">Remove</button></div>`).join(''):'<div class="empty">Your wishlist is empty.</div>';
+    foot.innerHTML='';return;
+  }
+  const cart=await loadCart();title.textContent='Cart';
+  if(!cart.length){items.innerHTML='<div class="empty">Your cart is empty.</div>';foot.innerHTML='';return}
+  items.innerHTML=cart.map(i=>`<div class="ditem"><div class="thumb"></div><div class="info"><b>${i.products.name}</b>${money(i.products.price_cents)}
+    <div class="qty"><button onclick="chQty('${i.id}',${i.qty-1})">−</button> ${i.qty} <button onclick="chQty('${i.id}',${i.qty+1})">+</button></div></div>
+    <button class="rm" onclick="chQty('${i.id}',0)">Remove</button></div>`).join('');
+  const sub=cart.reduce((s,i)=>s+i.products.price_cents*i.qty,0);
+  const disc=discountCents(S.coupon,sub),total=sub-disc;
+  let cn='';if(S.coupon){cn=disc>0?`<div class="cn ok">✓ applied (−${money(disc)})</div>`:`<div class="cn err">Coupon needs a higher subtotal.</div>`}
+  foot.innerHTML=`<div class="coupon"><input id="couponInput" placeholder="Coupon code" value="${S.coupon?S.coupon.code:''}"><button onclick="applyCoupon()">Apply</button></div>${cn}
+    <div class="sumline"><span>Subtotal</span><span>${money(sub)}</span></div>
+    ${disc>0?`<div class="sumline"><span>Discount</span><span class="disc">−${money(disc)}</span></div>`:''}
+    <div class="sumline total"><span>Total</span><span>${money(total)}</span></div>
+    <button class="checkout" onclick="checkout()">Place order (no payment)</button>`;
+}
+async function chQty(id,q){await setCartQty(id,q);await renderDrawer();refreshAuthUI()}
+async function rmWish(id){await db.from('wishlist_items').delete().eq('id',id);await renderDrawer();refreshAuthUI();
+  const {data}=await db.from('wishlist_items').select('product_id');S.wish=new Set((data||[]).map(x=>x.product_id));renderCards()}
+async function moveToCart(pid,wid){await addToCart(pid);await db.from('wishlist_items').delete().eq('id',wid);toast('Moved to cart 🛒');S.wish.delete(pid);await renderDrawer();refreshAuthUI();renderCards()}
+async function applyCoupon(){const v=document.getElementById('couponInput').value.trim();if(!v){S.coupon=null;return renderDrawer()}
+  const c=await findCoupon(v);S.coupon=c||null;toast(c?'Coupon applied ✓':'Invalid coupon ✕');renderDrawer()}
+async function checkout(){const cart=await loadCart();if(!cart.length)return;
+  try{const no=await placeOrder(cart,S.coupon);S.coupon=null;
+    const msg=await getSetting('confirmation_message');
+    toast('Order '+no+' placed 🎉');await renderDrawer();refreshAuthUI();loadGrid();
+    setTimeout(()=>alert('Order '+no+' confirmed!\n\n'+msg),400);
+  }catch(e){toast('Could not place order: '+e.message)}}
+
+/* auth modal */
+function openModal(){document.getElementById('modal').classList.add('show');document.getElementById('overlay').classList.add('show')}
+function toggleReg(){S.reg=!S.reg;
+  document.getElementById('mTitle').textContent=S.reg?'Create your account':'Welcome back';
+  document.getElementById('mSub').textContent=S.reg?'Start your world collection':'Log in to your collection';
+  document.getElementById('regFields').style.display=S.reg?'block':'none';
+  document.getElementById('mBtn').textContent=S.reg?'Create account':'Log in';
+  document.getElementById('mSwap').innerHTML=S.reg?'Already a collector? <a onclick="toggleReg()">Log in</a>':'New collector? <a onclick="toggleReg()">Create account</a>';}
+async function doAuth(){
+  const email=document.getElementById('fEmail').value.trim(),pass=document.getElementById('fPass').value,err=document.getElementById('authErr');err.textContent='';
+  try{
+    if(S.reg){await signUp(email,pass,{full_name:document.getElementById('fName').value.trim(),username:document.getElementById('fUser').value.trim()});toast('Account created 👋');}
+    else{await signIn(email,pass);toast('Welcome back 👋');}
+    closeAll();await refreshAuthUI();loadGrid();
+  }catch(e){err.textContent=e.message||'Something went wrong'}}
+
+/* init */
+renderSubs();refreshAuthUI();loadGrid();
+</script>
+</body>
+</html>
